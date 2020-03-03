@@ -8,18 +8,13 @@ import numpy as np
 class NeuralNet(object):
     def __init__(self, l, h, n):
         self.learning_rate = l
-        self.input_layer = None
-        self.output_layer = None
-        self.hidden_layer = np.array([[]])
-        self.input_weights = None
-        self.output_weights = None
-        self.num_inputs, self.num_outputs = 0, 0
         self.num_hidden_layers = h
         self.num_hidden_neurons = n
-        self.b1 = 1
-        self.b2 = 1
-        self.h, self.delta_h = None, None
-        self.output, self.delta_output = None, None
+        self.input_layer, self.hidden_layer, self.output_layer = None, None, None
+        self.input_weights, self.output_weights = None, None
+        self.num_inputs, self.num_outputs = 0, 0
+        self.bias_1, self.bias_2 = 1, 1
+        self.predicted_output = None
         self.loss = None
 
     def read_input_data(self, inputs, targets):
@@ -37,27 +32,28 @@ class NeuralNet(object):
 
     def forward_pass(self):
         """Compute forward pass"""
-        self.h = self.sigmoid_function(np.dot(self.input_weights, self.input_layer) + self.b1)
-        self.output = self.sigmoid_function(np.dot(self.output_weights, self.h) + self.b2)
+        self.hidden_layer = self.sigmoid_function(np.dot(self.input_weights, self.input_layer) + self.bias_1)
+        self.predicted_output = self.sigmoid_function(np.dot(self.output_weights, self.hidden_layer) + self.bias_2)
+        self.loss = self.output_layer-self.predicted_output
 
-        self.loss = self.output_layer-self.output
-
-    def sigmoid_function(self, x):
+    @staticmethod
+    def sigmoid_function(x):
         return 1.0/(1.0 + np.exp(-x))
 
-    def gradient_sigmoid(self, f):
+    @staticmethod
+    def gradient_sigmoid(f):
         return (1-f)*f
 
     def back_propagation(self):
         """Compute gradient of all functions"""
-
-        delta_output = np.array(self.loss * self.gradient_sigmoid(self.output))
-        delta_h = np.array(self.gradient_sigmoid(self.h))
+        delta_output = np.array(self.loss * self.gradient_sigmoid(self.predicted_output))
+        delta_h = np.array(self.gradient_sigmoid(self.hidden_layer))
         tmp_hidden_deltas = np.dot(self.output_weights.T, delta_output)
         final_hidden_deltas = tmp_hidden_deltas * delta_h
 
-        update_1 = np.dot(self.h, delta_output.T)*self.learning_rate
+        update_1 = np.dot(self.hidden_layer, delta_output.T)*self.learning_rate
         self.output_weights += update_1.T
 
         update_2 = np.dot(self.input_layer, final_hidden_deltas.T)*self.learning_rate
         self.input_weights += update_2.T
+
