@@ -18,7 +18,12 @@ class NeuralNet(object):
         self.loss = None
 
     def read_input_data(self, inputs, targets):
-        """Read input data and populate input and output layers"""
+        """
+        Read input data and populate input and output layers
+        :param inputs: Input data to the model
+        :param targets: Desired targets
+        :return: None
+        """
         self.input_layer = np.loadtxt(inputs, delimiter=",", ndmin=2)
         self.output_layer = np.loadtxt(targets, delimiter=",", ndmin=2)
         self.num_inputs = self.input_layer.shape[0]
@@ -51,9 +56,18 @@ class NeuralNet(object):
         tmp_hidden_deltas = np.dot(self.output_weights.T, delta_output)
         final_hidden_deltas = tmp_hidden_deltas * delta_h
 
-        update_1 = np.dot(self.hidden_layer, delta_output.T)*self.learning_rate
+        update_1 = self.update_weights(self.hidden_layer, delta_output)
         self.output_weights += update_1.T
 
-        update_2 = np.dot(self.input_layer, final_hidden_deltas.T)*self.learning_rate
+        update_2 = self.update_weights(self.input_layer, final_hidden_deltas)
         self.input_weights += update_2.T
+
+    def update_weights(self, layer_1, layer_2):
+        """
+        Use the chain rule to update weights between two layers
+        :param layer_1: Inner layer
+        :param layer_2: Outer layer
+        :return: The update required scaled by the predefined learning rate
+        """
+        return np.dot(layer_1, layer_2.T)*self.learning_rate
 
