@@ -1,2 +1,2 @@
-# artificial neural network
+# Artificial Neural Network
 ## ANN implemented from first principles
