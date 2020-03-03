@@ -18,8 +18,8 @@ class NeuralNet(object):
         self.num_hidden_neurons = n
         self.b1 = 1
         self.b2 = 1
-        self.h, self.d_h = None, None
-        self.output, self.d_output = None, None
+        self.h, self.delta_h = None, None
+        self.output, self.delta_output = None, None
         self.loss = None
 
     def read_input_data(self, inputs, targets):
@@ -38,10 +38,9 @@ class NeuralNet(object):
     def forward_pass(self):
         """Compute forward pass"""
         self.h = self.sigmoid_function(np.dot(self.input_weights, self.input_layer) + self.b1)
-        self.output = np.dot(self.output_weights, self.h) + self.b2
+        self.output = self.sigmoid_function(np.dot(self.output_weights, self.h) + self.b2)
 
-        self.loss = self.output - self.output_layer
-        print(self.loss)
+        self.loss = self.output_layer-self.output
 
     def sigmoid_function(self, x):
         return 1.0/(1.0 + np.exp(-x))
@@ -52,12 +51,13 @@ class NeuralNet(object):
     def back_propagation(self):
         """Compute gradient of all functions"""
 
-        d_o = np.array(self.loss * self.gradient_sigmoid(self.loss))
-        d_h = np.array(self.gradient_sigmoid(self.h))
-        # print(d_h)
-        print(d_o.shape)
-        self.d_output = np.dot(d_o, self.output.T)
-        self.output_weights += -self.learning_rate*self.d_output
+        delta_output = np.array(self.loss * self.gradient_sigmoid(self.output))
+        delta_h = np.array(self.gradient_sigmoid(self.h))
+        tmp_hidden_deltas = np.dot(self.output_weights.T, delta_output)
+        final_hidden_deltas = tmp_hidden_deltas * delta_h
 
-        self.d_h = np.dot(d_h, self.h.T)
-        self.input_weights += -self.learning_rate*self.d_h
+        update_1 = np.dot(self.h, delta_output.T)*self.learning_rate
+        self.output_weights += update_1.T
+
+        update_2 = np.dot(self.input_layer, final_hidden_deltas.T)*self.learning_rate
+        self.input_weights += update_2.T
