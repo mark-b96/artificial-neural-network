@@ -4,23 +4,31 @@ Author: Mark Bonney
 """
 from NeuralNet import NeuralNet
 import numpy as np
+import time
 
 if __name__ == '__main__':
     learning_rate = 0.1
     epochs = 10_000
-    hidden_layers = 1
-    hidden_neurons = 5
-    inputs = 'Datasets/q3TrainInputs.csv'
-    targets = 'Datasets/q3TrainTargets.csv'
-    nn = NeuralNet(learning_rate, hidden_layers, hidden_neurons)
-    nn.read_input_data(inputs, targets)
+    input_data = 'Datasets/q3TrainInputs.csv'
+    target_data = 'Datasets/q3TrainTargets.csv'
+    nn = NeuralNet(learning_rate)
+    nn.read_input_data(input_data, target_data)
+    nn.add_layer(nn.num_inputs)
+    nn.add_layer(4)
+    nn.add_layer(4)
+    nn.add_layer(4)
     nn.initialise_weights()
+
+    print('Training...')
+    start_time = time.time()
     for epoch in range(epochs):
         nn.forward_pass()
         nn.back_propagation()
+    end_time = time.time()-start_time
+    print('Training completed in: {} seconds'.format(end_time))
 
-    inputs = 'Datasets/q3TestInputs.csv'
-    targets = 'Datasets/q3TestTargets.csv'
-    nn.read_input_data(inputs, targets)
-    nn.forward_pass()
-    print(np.round(nn.output))
+    input_data = 'Datasets/q3TestInputs.csv'
+    target_data = 'Datasets/q3TestTargets.csv'
+    nn.read_input_data(input_data, target_data)
+    print(np.round(nn.forward_pass())-nn.output_layer)
+

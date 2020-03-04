@@ -3,19 +3,17 @@ Author: Mark Bonney
 
 """
 import numpy as np
+from Layer import Layer
 
 
 class NeuralNet(object):
-    def __init__(self, l, h, n):
+    def __init__(self, l):
         self.learning_rate = l
-        self.num_hidden_layers = h
-        self.num_hidden_neurons = n
-        self.input_layer, self.hidden_layer, self.output_layer = None, None, None
-        self.input_weights, self.output_weights = None, None
+        self.input_layer, self.output_layer = None, None
         self.num_inputs, self.num_outputs = 0, 0
-        self.bias_1, self.bias_2 = 1, 1
-        self.predicted_output = None
         self.loss = None
+        self.hidden_layers = []  # List of layer objects
+        self.bias_neuron = 1  # Set to 1 for all layers
 
     def read_input_data(self, inputs, targets):
         """
@@ -30,16 +28,36 @@ class NeuralNet(object):
         self.num_outputs = self.output_layer.shape[0]
 
     def initialise_weights(self):
-        """Randomly initialise weight matrices"""
+        """Randomly initialise weight matrices for each layer in ANN"""
         np.random.seed(42)
-        self.input_weights = np.random.rand(self.num_hidden_neurons, self.num_inputs)
-        self.output_weights = np.random.rand(self.num_outputs, self.num_hidden_neurons)
+        self.add_layer(self.num_outputs)
+        previous_layer = self.hidden_layers[0].num_neurons
+        self.hidden_layers[0].output = self.input_layer
+        for layer in self.hidden_layers[1:]:
+            layer.weights = np.random.rand(layer.num_neurons, previous_layer)
+            previous_layer = layer.num_neurons
+
+    def add_layer(self, num_neurons):
+        """
+        Add a hidden layer to the ANN
+        :param num_neurons:
+        :return:
+        """
+        new_layer = Layer(num_neurons)
+        self.hidden_layers.append(new_layer)
 
     def forward_pass(self):
-        """Compute forward pass"""
-        self.hidden_layer = self.sigmoid_function(np.dot(self.input_weights, self.input_layer) + self.bias_1)
-        self.predicted_output = self.sigmoid_function(np.dot(self.output_weights, self.hidden_layer) + self.bias_2)
-        self.loss = self.output_layer-self.predicted_output
+        """
+        Compute forward pass
+        :return: Output matrix of ANN
+        """
+        previous_layer = self.input_layer
+        for layer in self.hidden_layers[1:]:
+            layer.output = self.sigmoid_function(np.dot(layer.weights, previous_layer) + self.bias_neuron)
+            previous_layer = layer.output
+
+        self.loss = self.output_layer - self.hidden_layers[-1].output
+        return self.hidden_layers[-1].output
 
     @staticmethod
     def sigmoid_function(x):
@@ -50,24 +68,15 @@ class NeuralNet(object):
         return (1-f)*f
 
     def back_propagation(self):
-        """Compute gradient of all functions"""
-        delta_output = np.array(self.loss * self.gradient_sigmoid(self.predicted_output))
-        delta_h = np.array(self.gradient_sigmoid(self.hidden_layer))
-        tmp_hidden_deltas = np.dot(self.output_weights.T, delta_output)
-        final_hidden_deltas = tmp_hidden_deltas * delta_h
-
-        update_1 = self.update_weights(self.hidden_layer, delta_output)
-        self.output_weights += update_1.T
-
-        update_2 = self.update_weights(self.input_layer, final_hidden_deltas)
-        self.input_weights += update_2.T
-
-    def update_weights(self, layer_1, layer_2):
-        """
-        Use the chain rule to update weights between two layers
-        :param layer_1: Inner layer
-        :param layer_2: Outer layer
-        :return: The update required scaled by the predefined learning rate
-        """
-        return np.dot(layer_1, layer_2.T)*self.learning_rate
+        """Compute gradient of all functions and perform back propagation"""
+        # Calculate delta at the output layer, using the loss
+        self.hidden_layers[-1].deltas = np.array(self.loss * self.gradient_sigmoid(self.hidden_layers[-1].output))
+        previous_layer = self.hidden_layers[-1]
+        #  Start at last hidden layer and loop through all layers
+        for layer in self.hidden_layers[::-1][1:]:
+            layer.output_gradient = self.gradient_sigmoid(layer.output)
+            layer.deltas = np.dot(previous_layer.weights.T, previous_layer.deltas)*layer.output_gradient
+            update = np.dot(layer.output, previous_layer.deltas.T)
+            previous_layer.weights += update.T * self.learning_rate
+            previous_layer = layer
 
