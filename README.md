@@ -1,5 +1,8 @@
 # Artificial Neural Network
 ## Multi-layer ANN implemented from first principles
+Matrix multiplication is used to construct a mult-layer ANN.
+
+## Training and testing the model
 The learning rate and number of epochs can be defined in the main class.
 
 A hidden layer can be added to the ANN using the following code. The argument
