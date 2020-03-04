@@ -20,7 +20,6 @@ class NeuralNet(object):
         Read input data and populate input and output layers
         :param inputs: Input data to the model
         :param targets: Desired targets
-        :return: None
         """
         self.input_layer = np.loadtxt(inputs, delimiter=",", ndmin=2)
         self.output_layer = np.loadtxt(targets, delimiter=",", ndmin=2)
@@ -40,15 +39,14 @@ class NeuralNet(object):
     def add_layer(self, num_neurons):
         """
         Add a hidden layer to the ANN
-        :param num_neurons:
-        :return:
+        :param num_neurons: Number of neurons in the layer
         """
         new_layer = Layer(num_neurons)
         self.hidden_layers.append(new_layer)
 
     def forward_pass(self):
         """
-        Compute forward pass
+        Compute forward pass using matrices
         :return: Output matrix of ANN
         """
         previous_layer = self.input_layer
